@@ -1,18 +1,18 @@
-param name string
+param name string = 'runner'
 param location string = resourceGroup().location
 param tags object = {}
 
 param identityName string
 param containerAppsEnvironmentName string
 param containerRegistryName string
-param serviceName string = 'jobrunner'
+param serviceName string = 'runner'
 param imageName string
 
 resource userIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
   name: identityName
 }
 
-resource app 'Microsoft.App/containerApps@2023-04-01-preview' = {
+resource app 'Microsoft.App/containerApps@2023-05-01' = {
   name: name
   location: location
   tags: tags
@@ -25,11 +25,6 @@ resource app 'Microsoft.App/containerApps@2023-04-01-preview' = {
     workloadProfileName: 'NC24-A100'
     configuration: {
       activeRevisionsMode: 'single'
-      ingress: {
-        external: true
-        targetPort: 8000
-        transport: 'auto'
-      }
       registries: [
         {
           server: '${containerRegistry.name}.azurecr.io'
@@ -49,12 +44,16 @@ resource app 'Microsoft.App/containerApps@2023-04-01-preview' = {
             }
           ]
           resources: {
-            cpu: json('1')
-            memory: '2.0Gi'
+            cpu: json('4')
+            memory: '8.0Gi'
           }
         }
       ]
-    }
+      scale: {
+        minReplicas: 1
+        maxReplicas: 1
+      }
+    }    
   }
 }
 
@@ -66,4 +65,3 @@ resource containerRegistry 'Microsoft.ContainerRegistry/registries@2022-02-01-pr
   name: containerRegistryName
 }
 
-output uri string = 'https://${app.properties.configuration.ingress.fqdn}'

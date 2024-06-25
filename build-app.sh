@@ -38,9 +38,9 @@ fi
 ENVIRONMENT_NAME=$(az resource list -g $RESOURCE_GROUP --resource-type "Microsoft.App/managedEnvironments" --query "[0].name" -o tsv)
 IDENTITY_NAME=$(az resource list -g $RESOURCE_GROUP --resource-type "Microsoft.ManagedIdentity/userAssignedIdentities" --query "[0].name" -o tsv)
 AZURE_CONTAINER_REGISTRY_NAME=$(az resource list -g $RESOURCE_GROUP --resource-type "Microsoft.ContainerRegistry/registries" --query "[0].name" -o tsv)
+AZURE_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 
-az deployment group create -g $RESOURCE_GROUP -f ./infra/app/runner.bicep \
-  -p containerAppsEnvironmentName=$ENVIRONMENT_NAME -p identityName=$IDENTITY_NAME  \
-  -p containerRegistryName=$AZURE_CONTAINER_REGISTRY_NAME -p imageName=$IMAGE
-
-
+IMAGE_NAME="${AZURE_CONTAINER_REGISTRY_NAME}.azurecr.io/$IMAGE:latest"
+echo "building image $IMAGE_NAME"
+az acr build --subscription ${AZURE_SUBSCRIPTION_ID} --registry ${AZURE_CONTAINER_REGISTRY_NAME} --image $IMAGE:latest ./src/$IMAGE
+echo "built image $IMAGE_NAME"
