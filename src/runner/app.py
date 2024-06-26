@@ -1,44 +1,35 @@
-import torch
 import time
 import sys
 
-# Check if CUDA is available and the first command-line argument
-if len(sys.argv) > 1 and sys.argv[1] == "gpu" and torch.cuda.is_available():
-    device = torch.device("cuda")
-    print("CUDA is available. Running on GPU.")
-else:
-    device = torch.device("cpu")
-    print("CUDA is not available or 'cpu' argument provided. Running on CPU.")
+import os, uuid
+from azure.identity import DefaultAzureCredential
+from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 
-# matrix size of 30000 results in 1.8B multiplications (30000*30000*2)
-matrix_size = 30000
+try:
+    print("Starting download of file")
+    start = time.time()
+    print(start)
+    account_url = f"https://{os.environ.get('STORAGE_ACCOUNT_NAME')}.blob.core.windows.net" 
+    default_credential = DefaultAzureCredential()
 
-# Create tensors and move them to the device
-a = torch.randn(matrix_size, matrix_size, device=device)
-b = torch.randn(matrix_size, matrix_size, device=device)
+    # Create the BlobServiceClient object to download a file named "bigfile.bin" from container name 'model'
+    blob_service_client = blob_client = BlobClient(
+        account_url=account_url, 
+        container_name=os.environ.get('STORAGE_ACCOUNT_CONTAINER_NAME'), 
+        blob_name=os.environ.get('FILE_NAME'),
+        credential=default_credential,
+        max_single_get_size=1024*1024*16, # 16 MiB
+        max_chunk_get_size=1024*1024*1 # 1 MiB
+    )
 
-# Create CUDA events for measuring time
-start_event = torch.cuda.Event(enable_timing=True)
-end_event = torch.cuda.Event(enable_timing=True)
+    with open(file=os.path.join(os.environ.get('FILE_NAME')), mode="wb") as model_blob:
+        download_stream = blob_client.download_blob(max_concurrency=2)
+        model_blob.write(download_stream.readall())
 
-# Record the start event
-start_event.record()
+    print("Download finished")
+    end = time.time()
+    print(end - start)
 
-# Perform matrix multiplication
-c = torch.matmul(a, b)
-
-# Record the end event
-end_event.record()
-
-# Wait for the events to complete
-torch.cuda.synchronize()
-
-# Calculate the elapsed time
-elapsed_time = start_event.elapsed_time(end_event) / 1000  # Convert to seconds
-
-# Move the result back to the CPU if needed
-c = c.to("cpu")
-
-print("Result:")
-print(c)
-print("Elapsed Time:", elapsed_time, "seconds")
+except Exception as ex:
+    print('Exception:')
+    print(ex)

@@ -1,6 +1,6 @@
 @description('Specifies the Azure location for all resources.')
 param location string = resourceGroup().location
-
+param tags object = {}
 param serviceBusName string 
 
 resource serviceBus 'Microsoft.ServiceBus/namespaces@2021-11-01' = {

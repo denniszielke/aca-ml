@@ -37,6 +37,7 @@ bash ./build-app.sh $ENV_NAME runner
 ```
 ENV_NAME="mlgpu1"
 IMAGE="creru56tm3vaz6w.azurecr.io/runner:latest"
+IMAGE="creru56tm3vaz6w.azurecr.io/test:latest"
 
 bash ./deploy-app.sh $ENV_NAME $IMAGE
 

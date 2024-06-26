@@ -12,6 +12,8 @@ param applicationInsightsDashboardName string = ''
 param applicationInsightsName string = ''
 param logAnalyticsName string = ''
 param serviceBusName string = ''
+param storageAccountName string = ''
+param storageContainerName string = 'model'
 
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
@@ -34,6 +36,19 @@ module containerApps './core/host/container-apps.bicep' = {
     logAnalyticsWorkspaceName: monitoring.outputs.logAnalyticsWorkspaceName
     applicationInsightsName: monitoring.outputs.applicationInsightsName
     identityName: '${abbrs.managedIdentityUserAssignedIdentities}app'
+    storageAccountName : storage.outputs.storageAccountName
+    storageContainerName : storageContainerName
+  }
+}
+
+// Storage
+module storage './core/host/storage.bicep' = {
+  name: 'storage'
+  params: {
+    location: location
+    tags: tags
+    containerName: storageContainerName
+    storageAccountName: !empty(storageAccountName) ? storageAccountName : '${abbrs.storageStorageAccounts}${resourceToken}'
   }
 }
 

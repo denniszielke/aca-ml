@@ -8,6 +8,8 @@ param containerAppsEnvironmentName string
 param containerRegistryName string
 param logAnalyticsWorkspaceName string
 param applicationInsightsName string
+param storageAccountName string = ''
+param storageContainerName string = ''
 
 module containerAppsEnvironment 'container-apps-environment.bicep' = {
   name: '${name}-container-apps-environment'
@@ -41,6 +43,15 @@ module containerRegistryAccess '../security/registry-access.bicep' = {
     principalId: userIdentity.properties.principalId
   }
 }
+
+module storageAccess '../security/storage-access.bicep' = {
+  name: '${deployment().name}-storage-access'
+  params: {
+    storageAccountName: storageAccountName
+    principalId: userIdentity.properties.principalId
+  }
+}
+
 
 output defaultDomain string = containerAppsEnvironment.outputs.defaultDomain
 output environmentName string = containerAppsEnvironment.outputs.name

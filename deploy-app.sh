@@ -38,9 +38,10 @@ fi
 ENVIRONMENT_NAME=$(az resource list -g $RESOURCE_GROUP --resource-type "Microsoft.App/managedEnvironments" --query "[0].name" -o tsv)
 IDENTITY_NAME=$(az resource list -g $RESOURCE_GROUP --resource-type "Microsoft.ManagedIdentity/userAssignedIdentities" --query "[0].name" -o tsv)
 AZURE_CONTAINER_REGISTRY_NAME=$(az resource list -g $RESOURCE_GROUP --resource-type "Microsoft.ContainerRegistry/registries" --query "[0].name" -o tsv)
+STORAGE_ACCOUNT_NAME=$(az resource list -g $RESOURCE_GROUP --resource-type "Microsoft.Storage/storageAccounts" --query "[0].name" -o tsv)
 
 az deployment group create -g $RESOURCE_GROUP -f ./infra/app/runner.bicep \
   -p containerAppsEnvironmentName=$ENVIRONMENT_NAME -p identityName=$IDENTITY_NAME  \
-  -p containerRegistryName=$AZURE_CONTAINER_REGISTRY_NAME -p imageName=$IMAGE
+  -p containerRegistryName=$AZURE_CONTAINER_REGISTRY_NAME -p imageName=$IMAGE -p storageAccountName=$STORAGE_ACCOUNT_NAME
 
 
